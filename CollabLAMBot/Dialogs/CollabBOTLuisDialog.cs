@@ -32,30 +32,7 @@ namespace CollabLAMBot.Dialogs
         [LuisIntent("None")]
         [LuisIntent("")]
         public async Task None(IDialogContext context, LuisResult result)
-        {
-            #region commented prompt section
-            //var _helpdialog = new PromptDialog.PromptChoice<string>(
-            //    new string[] {
-            //        Constants.SiteAccess,
-            //        Constants.SiteCreation,
-            //        Constants.SiteQuotaChange,
-            //        Constants.ExternalUserAccess,
-            //        Constants.ProfileUpdates,
-            //        Constants.Help},
-            //    "May I assist you with something else?",
-            //    "Please select between 1 to 6.",
-            //    3,
-            //    PromptStyle.PerLine,
-            //    new string[] {
-            //        "Site Access (press 1)",
-            //        "Site/ Site Collection Creation (press 2)",
-            //        "Update Site Collection Quota (press 3)",
-            //        "Give access to external user (press 4)",
-            //        "Update user profile (press 5)",
-            //         "Help (press 6)"});            
-
-            //context.Call(_helpdialog, OnOptionSelected);
-            #endregion                      
+        {                                
 
             await context.PostAsync("Sorry \U0001F641, I am unable to understand you." +                
                         "\r\r Do you want me to raise a service request for the same?");
@@ -65,10 +42,8 @@ namespace CollabLAMBot.Dialogs
 
         [LuisIntent("ArticleSearch")]
         public async Task ArticleSearch(IDialogContext context, LuisResult result)
-        {
-            IntentRecommendation re = result.TopScoringIntent;
-            string test = re.Intent;
-            //await context.PostAsync(test);
+        {        
+           
             context.Call(new ArticleSearch(test) ,Callback);
         }
 
