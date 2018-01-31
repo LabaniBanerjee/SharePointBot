@@ -16,11 +16,11 @@ namespace CollabLAMBot.LAM
 {
     public class SharePointPrimary
     {
-        string SPOAdmin         = "labani@AvaIndCollabSL.onmicrosoft.com";
-        string SPOAdminPassowrd = "$D9920526814l";
-        string SPOAdminURL      = "https://avaindcollabsl-admin.sharepoint.com/";
-        string clientID         = "b6c760b4-defd-4471-9ab0-15adbfd4b1a7";
-        string clientSecret     = "agRvUdPm0ujJxPc7qRshc24xJY64DHzwEC8jv7tADyI=";
+        string SPOAdmin         = "yourid.onmicrosoft.com";
+        string SPOAdminPassowrd = "****";
+        string SPOAdminURL      = "https://yourdomain-admin.sharepoint.com/";
+        string clientID         = "**********************";
+        string clientSecret     = "*************************";
         string siteCollectionURL = string.Empty;
 
         /// <summary>
