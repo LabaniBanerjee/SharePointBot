@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace CollabLAMBot.Dialogs
 {
-    [LuisModel("0813b523-b87f-451c-b8d2-3c6224154886", "c428e39842534c96b7cb10688ba2aa2e")]
+    [LuisModel("", "")]
     [Serializable]
     public class CollabBOTLuisDialog : LuisDialog<object>
     {
