@@ -127,6 +127,56 @@ namespace CollabLAMBot.LAM
             return isSiteCreated;
         }
 
+        public bool DoesContainSpecialCharacter(string _inputSiteCollectionTitle)
+        {
+            bool isValid = false;
+            var regexItem = new Regex("^[a-zA-Z0-9 _]*$");
+
+            if (regexItem.IsMatch(_inputSiteCollectionTitle))
+            {
+                isValid = true;
+            }
+
+            return isValid;
+
+        }
+
+        public bool DoesURLExist(string _inputSiteCollectionTitle)
+        {
+            bool isSiteCollectionURLExisting = false;
+            string siteCollectionUrl = SPOAdminURL;
+
+
+            string _inputSiteCollectionURL = Constants.RootSiteCollectionURL + Constants.ManagedPath + _inputSiteCollectionTitle;
+
+            try
+            {
+                ClientContext clientContext;
+                using (clientContext = GetClientContext(siteCollectionUrl, clientID, clientSecret))
+                {
+                    clientContext.ExecuteQuery();
+                    Tenant currentO365Tenant = new Tenant(clientContext);
+                    clientContext.ExecuteQuery();
+
+                    SPOSitePropertiesEnumerable sitePropEnumerable = currentO365Tenant.GetSiteProperties(0, true);
+                    clientContext.Load(sitePropEnumerable);
+                    clientContext.ExecuteQuery();
+
+                    List<SiteProperties> sitePropertyCollection = new List<SiteProperties>();
+                    sitePropertyCollection.AddRange(sitePropEnumerable);
+
+                    SiteProperties property1 = sitePropertyCollection.Find(s => s.Url.ToLower().Equals(_inputSiteCollectionURL.ToLower())) ;
+                    isSiteCollectionURLExisting = property1 != null ? true : false;                    
+
+                }
+            }
+            catch(Exception ex)
+            {
+                isSiteCollectionURLExisting = false;
+            }
+            return isSiteCollectionURLExisting;
+        }
+
         public Dictionary<string, string> SearchHelpArticleonTopic(int _inputHelpArticle)
         {
             string siteCollectionUrl = "https://avaindcollabsl.sharepoint.com";

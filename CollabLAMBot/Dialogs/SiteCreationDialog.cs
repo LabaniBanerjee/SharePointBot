@@ -61,7 +61,7 @@ namespace CollabLAMBot.Dialogs
             };
 
             return new FormBuilder<SiteCreationQuery>()
-                .Field(nameof(SiteCreationQuery.SiteCollectionTitle))
+                .Field(nameof(SiteCreationQuery.SiteCollectionTitle),validate: ValidateSiteCollectionURL)
                 .Field(nameof(SiteCreationQuery.PrimarySiteCollectionAdmin), validate: ValidatePrimaryAdmin)               
                 .AddRemainingFields()
                 .Confirm("Great. I am ready to submit your request with the following details \U0001F447 " +
@@ -72,6 +72,27 @@ namespace CollabLAMBot.Dialogs
                  //.Message("Thank you, I have submitted your request.")
                 .Build();
 
+        }
+
+        private async Task<ValidateResult> ValidateSiteCollectionURL(SiteCreationQuery state, object value)
+        {
+            string _inputSiteCollectionTitle = Convert.ToString(value);
+            var result = new ValidateResult { IsValid = false, Value = _inputSiteCollectionTitle };
+
+            SharePointPrimary obj = new SharePointPrimary();
+            result.IsValid = obj.DoesContainSpecialCharacter(_inputSiteCollectionTitle);
+            if (result.IsValid)
+            {
+                result.IsValid = !obj.DoesURLExist(_inputSiteCollectionTitle);
+                if (!result.IsValid)
+                    result.Feedback = $"A site collection with url '{_inputSiteCollectionTitle}' is already present in our tenant. Try something different.";
+                else
+                    result.Feedback = "The site collection url looks fine.";
+            }
+            else
+                result.Feedback = "Special characters are not allowed in site collection URL.";            
+
+            return result;
         }
 
         private async Task<ValidateResult> ValidatePrimaryAdmin(SiteCreationQuery state, object value)
