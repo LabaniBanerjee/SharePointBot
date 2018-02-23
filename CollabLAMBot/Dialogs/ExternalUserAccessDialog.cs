@@ -1,4 +1,6 @@
-﻿using Microsoft.Bot.Builder.Dialogs;
+﻿using CollabLAMBot.LAM;
+using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.FormFlow;
 using System;
 using System.Threading.Tasks;
 
@@ -10,15 +12,100 @@ namespace CollabLAMBot.Dialogs
     {
         public async Task StartAsync(IDialogContext context)
         {
-            await context.PostAsync("Sorry, I am unable to grant access to any External User at the moment. Please select another option. ");
-            context.Done("false");
-            //context.Wait(MessageReceived);
+            await context.PostAsync("Sure, I can help ypu with External Sharing, before that I need 2 inputs from you.");
+
+
+            var externalSharingFormDialog = FormDialog.FromForm(this.BuildExternalSharingForm, FormOptions.PromptInStart);
+
+            context.Call(externalSharingFormDialog, this.ResumeExternalSharingDialog);
+
         }
 
-        private async Task MessageReceived(IDialogContext context, IAwaitable<object> result)
+        private async Task ResumeExternalSharingDialog(IDialogContext context, IAwaitable<ExternalSharingQuery> result)
         {
-            var myresult = await result;
-            context.Done("ExternalUserAccessDialog says : " + myresult);
+            try
+            {
+                var resultFromExtrnalSharing = await result;
+                string _strURL = resultFromExtrnalSharing.SiteCollectionURL;
+                string _strUserID = resultFromExtrnalSharing.SPOExternalUserID;
+                bool _isPermissionGranted = false;
+
+                try
+                {
+                    SharePointPrimary obj = new SharePointPrimary();
+                    _isPermissionGranted = obj.IsTenantExternalSharingEnabled(_strURL, _strUserID);
+                    context.Done("Access granted.");
+                    if (_isPermissionGranted)
+                        await context.PostAsync($"Access granted \U00002705 Please browse the site url '{_strURL}' ");
+                    else
+                        await context.PostAsync("Permission could not be granted \U0001F641 . Please try again later.");
+                }
+                catch(Exception)
+                {
+                    context.Fail(new Exception("Unable to grant permission to user \U0001F641 . Please try again later."));
+                }
+            }
+            catch (TooManyAttemptsException)
+            {
+                await context.PostAsync("Sorry \U0001F641 , I am unable to understand you. Let us try again.");
+            }
         }
+
+
+        private IForm<ExternalSharingQuery> BuildExternalSharingForm()
+        {
+            OnCompletionAsyncDelegate<ExternalSharingQuery> processExternalSharing = async (context, authorizationState) =>
+            {
+                await context.PostAsync($"Processing your request...");
+
+            };
+
+            return new FormBuilder<ExternalSharingQuery>()
+                .Field(nameof(ExternalSharingQuery.SiteCollectionURL), validate: ValidateSiteCollectionURL)
+                .Field(nameof(ExternalSharingQuery.SPOExternalUserID))               
+                .AddRemainingFields()
+                .Confirm("Great. I am ready to submit your request with the following details \U0001F447 " +
+                        "\r\r Your id is {SPOExternalUserID} and you want to access Site Collection '{SiteCollectionURL}'. " +
+                        "\r\r Is that correct?")
+                .OnCompletion(processExternalSharing)
+                .Message("Thank you! I have submitted your request.")
+                .Build();
+        }
+
+        private async Task<ValidateResult> ValidateSiteCollectionURL(ExternalSharingQuery state, object value)
+        {
+            string _inputSiteCollectionURL = Convert.ToString(value);
+            var result = new ValidateResult { IsValid = false, Value = _inputSiteCollectionURL };
+
+            SharePointPrimary obj = new SharePointPrimary(_inputSiteCollectionURL);
+            result.IsValid = obj.IsValidSiteCollectionURL();
+            if (!result.IsValid)
+                result.Feedback = $"This site {_inputSiteCollectionURL} does not exist in our O365 tenant. Please enter a valid URL.";
+            else
+                result.Feedback = "Yes. I have found this site collection in our O365 tenant.";
+
+            return result;
+        }
+
+
+
+
+        #region query helper
+
+        [Serializable]
+        public class ExternalSharingQuery
+        {
+            [Prompt("Please enter the Site Collection URL.")]
+            public string SiteCollectionURL { get; set; }
+
+            [Prompt("Please enter your id.")]
+            public string SPOExternalUserID { get; set; }
+
+            
+        }
+
+        #endregion
+
+
     }
 }

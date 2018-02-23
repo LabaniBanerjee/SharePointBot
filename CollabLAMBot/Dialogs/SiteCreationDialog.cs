@@ -2,7 +2,9 @@
 using CollabLAMBot.LAM;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.FormFlow;
+using Microsoft.Bot.Connector;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 namespace CollabLAMBot.Dialogs
 {
@@ -31,12 +33,21 @@ namespace CollabLAMBot.Dialogs
                 {
                     try
                     {
-                        //bool isSiteCreated = await Task.Run(() => obj.IsSiteCollectionCreated(_strSiteTitle, _strPrimaryAdmin));
+                        
                         Task<bool> _isCreated = obj.IsSiteCollectionCreated(_strSiteTitle, _strPrimaryAdmin);
 
                         context.Done("Site collection is getting created");
+
+                        Attachment attachment = new Attachment();
+                        attachment.ContentType = "application/pdf";
+                        attachment.ContentUrl = Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle;
+                        attachment.Name = _strSiteTitle;
+
+                        var replyMessage = context.MakeMessage();
+                        replyMessage.Attachments = new List<Attachment> { attachment };
+
                         await context.PostAsync("I have started creating your site collection. It may take 5 - 10 minutes to complete the process.");
-                        await context.PostAsync("Please browse the url '" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + "' after sometime.");
+                        await context.PostAsync("Please browse the site '" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + "' after sometime.");
 
                     }
                     catch (Exception)
@@ -81,6 +92,7 @@ namespace CollabLAMBot.Dialogs
 
             SharePointPrimary obj = new SharePointPrimary();
             result.IsValid = obj.DoesContainSpecialCharacter(_inputSiteCollectionTitle);
+            
             if (result.IsValid)
             {
                 result.IsValid = !obj.DoesURLExist(_inputSiteCollectionTitle);
@@ -90,7 +102,9 @@ namespace CollabLAMBot.Dialogs
                     result.Feedback = "The site collection url looks fine.";
             }
             else
-                result.Feedback = "Special characters are not allowed in site collection URL.";            
+            {
+               result.Feedback = "Special characters are not allowed in site collection URL.";
+            }
 
             return result;
         }
@@ -118,7 +132,8 @@ namespace CollabLAMBot.Dialogs
     [Serializable]
     public class SiteCreationQuery
     {
-        [Prompt("Please enter a site collection title (avoid any special characters like $,#,!).")]
+        [Prompt("Please enter a site collection title (avoid any special characters like $,#,!).")]        
+        //[Pattern(@"(<Undefined control sequence>\d)^[a-zA-Z0-9 _]*$")]
         public string SiteCollectionTitle { get; set; }
 
         [Prompt("Please enter Primary Site Collection Admin id.")]

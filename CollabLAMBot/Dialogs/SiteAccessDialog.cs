@@ -76,8 +76,7 @@ namespace CollabLAMBot.Dialogs
                 var resultFromUserAuthorization = await result;
                 string _strURL = resultFromUserAuthorization.SiteCollectionURL;
                 string _strUserID = resultFromUserAuthorization.SPOUserID;
-                int _intRoleype = Convert.ToInt32(resultFromUserAuthorization.SharepointOnlineRole);
-                string siteCollectionAdmins = string.Empty;
+                int _intRoleype = Convert.ToInt32(resultFromUserAuthorization.SharepointOnlineRole);               
                 bool _isPermissionGranted = false;
 
                 SharePointPrimary obj = new SharePointPrimary();    
@@ -99,9 +98,7 @@ namespace CollabLAMBot.Dialogs
                     {
                         context.Fail(new TooManyAttemptsException("Unable to grant permission to user \U0001F641 . Please try again later."));
                     }
-                }               
-                
-                //await context.PostAsync($"User Authorization says site collection admin(s) are : {siteCollectionAdmins}");
+                }
             }
             catch (TooManyAttemptsException)
             {

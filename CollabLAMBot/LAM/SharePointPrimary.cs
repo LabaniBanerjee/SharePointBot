@@ -1,6 +1,8 @@
 ﻿using Avanade.LAM.CollabBOT.LAM;
 using Microsoft.Online.SharePoint.TenantAdministration;
+using Microsoft.Online.SharePoint.TenantManagement;
 using Microsoft.SharePoint.Client;
+using Microsoft.SharePoint.Client.Sharing;
 using Microsoft.SharePoint.Client.UserProfiles;
 using System;
 using System.Collections.Generic;
@@ -34,7 +36,46 @@ namespace CollabLAMBot.LAM
         /// <summary>
         /// constrcutor
         /// </summary>
-        public SharePointPrimary() { }        
+        public SharePointPrimary() { }
+
+        public bool IsSiteCollectionStorageQuotaUpdated(string _strURL, int _intNewQuota)
+        {
+            bool isStorageUpdated = false;
+            string siteCollectionUrl = SPOAdminURL;
+
+            try
+            {
+                ClientContext clientContext;
+                using (clientContext = GetClientContext(siteCollectionUrl, clientID, clientSecret))
+                {
+                    clientContext.ExecuteQuery();
+                    Tenant currentO365Tenant = new Tenant(clientContext);
+                    clientContext.ExecuteQuery();
+
+                    SiteProperties propertyColl = currentO365Tenant.GetSitePropertiesByUrl(_strURL,true);
+
+                    if (propertyColl != null)
+                    {
+                        clientContext.Load(propertyColl);
+                        clientContext.ExecuteQuery();
+
+                        propertyColl.Title += "_storage Updated By Bot";
+                        propertyColl.StorageMaximumLevel += (_intNewQuota * 1024);                        
+                        propertyColl.Update();
+
+                        clientContext.Load(propertyColl);
+                        clientContext.ExecuteQuery();
+                        isStorageUpdated = true;
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                isStorageUpdated = false;
+            }
+
+            return isStorageUpdated;
+        }
 
         /// <summary>
         /// 
@@ -76,7 +117,7 @@ namespace CollabLAMBot.LAM
                         Url = Constants.RootSiteCollectionURL+Constants.ManagedPath+_strSiteTitle,
                         Owner = _strPrimaryAdmin,
                         Template = "STS#0",
-                        StorageMaximumLevel = 1,
+                        StorageMaximumLevel = 2,
                         UserCodeMaximumLevel = 1,
                         UserCodeWarningLevel = 1,
                         StorageWarningLevel = 1,
@@ -234,7 +275,6 @@ namespace CollabLAMBot.LAM
             return searchedDocs;
 
         }
-
 
         /// <summary>
         /// 
@@ -457,6 +497,22 @@ namespace CollabLAMBot.LAM
             return isValid;
         }
 
+        public bool IsSiteCollectionAdmin(string _inputSPOUserID)
+        {
+            bool isSiteAdmin = false;
+            List<string> lstSiteCollectionAdmins = new List<string>();
+
+            lstSiteCollectionAdmins = GetSiteCollectionAdmins();
+            if (lstSiteCollectionAdmins.Count > 0)
+            {
+                if (lstSiteCollectionAdmins.Contains(_inputSPOUserID.ToLower()))
+                    isSiteAdmin = true;
+                else
+                    isSiteAdmin = false;
+            }
+            return isSiteAdmin;
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -536,16 +592,77 @@ namespace CollabLAMBot.LAM
             return _userPermissions;
         }
 
-        public string GetSiteCollectionAdmins()
+        public bool IsTenantExternalSharingEnabled(string _inputSiteCollectionUrl, string _strUserID)
         {
-            string siteCollectionAdmins = string.Empty;
+            bool isExternalShaingEnabled = false;
+            string siteCollectionUrl = SPOAdminURL;
+            string message = string.Empty;
+
+            ClientContext clientContext;
+            try
+            {
+                using (clientContext = GetClientContext(siteCollectionUrl, clientID, clientSecret))
+                {
+                    clientContext.ExecuteQuery();
+                    Tenant currentO365Tenant = new Tenant(clientContext);
+                    clientContext.Load(currentO365Tenant, O365t => O365t.SharingCapability);
+                    clientContext.ExecuteQuery();
+
+
+                    SharingCapabilities _tenantSharing = currentO365Tenant.SharingCapability;
+                    if (_tenantSharing == SharingCapabilities.Disabled)
+                    {
+                        message = "Sharing is currently disabled in our tenant.";
+                        isExternalShaingEnabled = false;
+                    }
+                    else
+                    {
+                        SiteProperties _siteprops = currentO365Tenant.GetSitePropertiesByUrl(_inputSiteCollectionUrl, true);
+                        clientContext.Load(_siteprops);
+                        clientContext.ExecuteQuery();
+
+                        var _currentShareSettings = _siteprops.SharingCapability;
+
+                        _siteprops.SharingCapability = _tenantSharing;
+                        _siteprops.Update();
+                        clientContext.ExecuteQuery();
+
+                        var users = new List<UserRoleAssignment>();
+                        users.Add(new UserRoleAssignment()
+                        {
+                            UserId = _strUserID,
+                            Role = Role.View
+                        });
+
+                        WebSharingManager.UpdateWebSharingInformation(clientContext, clientContext.Web, users, true, null, true, true);
+                        clientContext.ExecuteQuery();
+
+                    }
+
+                }
+            }
+            catch(Exception ex)
+            {
+                message = ex.Message;
+            }
+
+                return isExternalShaingEnabled;
+
+        }
+
+        public List<string> GetSiteCollectionAdmins()
+        {
+            string message = string.Empty;
             string siteCollectionUrl = this.siteCollectionURL;
+            List<string> lstSiteCollectionAdmins = new List<string>();
+            lstSiteCollectionAdmins.Clear();
 
             try
             {
                 if (string.IsNullOrEmpty(siteCollectionUrl))
                 {
-                    return "No site collection URL is passed.";
+                    message = "No site collection URL is passed.";
+                    
                 }
                 else
                 {
@@ -553,7 +670,7 @@ namespace CollabLAMBot.LAM
                     bool isUrlValid = Uri.TryCreate(siteCollectionUrl, UriKind.Absolute, out uriResult) && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
                     if (!isUrlValid)
                     {
-                        return "This is not a valid Uri.";
+                        message = "This is not a valid Uri.";
                     }
                     else
                     {
@@ -564,17 +681,17 @@ namespace CollabLAMBot.LAM
                         }
 
                         ClientContext clientContext;
-                        //using (clientContext = new ClientContext(siteCollectionUrl))
+                       
                         using (clientContext = GetClientContext(siteCollectionUrl, clientID, clientSecret))
                         {
-                            //clientContext.Credentials = new SharePointOnlineCredentials(SPOAdmin, securePassword);
+                            
                             try
                             {
                                 clientContext.ExecuteQuery();
                             }
                             catch (Exception ex)
                             {
-                                return "Error : " + ex.Message;
+                                message = ex.Message;
                             }
 
                             clientContext.Load(clientContext.Web);
@@ -589,21 +706,21 @@ namespace CollabLAMBot.LAM
                             foreach (var user in users)
                             {
                                 if (user.IsSiteAdmin)
-                                {
-                                    siteCollectionAdmins += user.Email + "\r\r";
+                                {  
+                                    lstSiteCollectionAdmins.Add(user.Email.ToLower());                                    
                                 }
-
                             }
-                        }//
+                        }
                     }
                 }
-            }//
+            }
             catch (Exception ex)
             {
-                return "Error : "+ex.Message;
+                message = ex.Message;
             }
-            return siteCollectionAdmins;
+            return lstSiteCollectionAdmins;
         }
+
 
         public string GetSiteCollectionAdminsByPowerShell()
         {
