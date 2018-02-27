@@ -34,7 +34,7 @@ namespace CollabLAMBot.Dialogs
                 {
                     try
                     {
-                        SharePointPrimary obj = new SharePointPrimary();
+                        SharePointPrimary obj = new SharePointPrimary(_strURL);
                         bool isSiteCollectionAdmin = obj.IsSiteCollectionAdmin(_strUserID);
                         if (isSiteCollectionAdmin)
                         {
@@ -51,9 +51,18 @@ namespace CollabLAMBot.Dialogs
                         {
                             List<string> lstSiteCollectionAdmins = new List<string>();
                             lstSiteCollectionAdmins = obj.GetSiteCollectionAdmins();
-                            await context.PostAsync($"You are not authorized to update the Storage Quota of the Site Collection '{_strURL}'");
+                            string strSiteCollectionAdmins = string.Empty;
+
+                            foreach(var eachAdmin in lstSiteCollectionAdmins)
+                            {
+                                strSiteCollectionAdmins += eachAdmin+ ";";
+                            }
+
+                            await context.PostAsync($"Sorry \U0001F641 I just found out that you are not authorized to update the Storage Quota of the Site Collection '{_strURL}'");
                             await context.PostAsync($"Please reach out to one of the Site Collection Adminstrators listed below:" +
-                                "\r\r"+lstSiteCollectionAdmins);
+                                "\r\r"+ strSiteCollectionAdmins);
+
+                            context.Done("Storage Quota Not Updated.");
                         }
                     }
                     catch(Exception)
@@ -84,7 +93,7 @@ namespace CollabLAMBot.Dialogs
                 //.Field(nameof(SiteQuotaChangeQuery.NewStorageQuota))               
                 .AddRemainingFields()
                 .Confirm("Great. I am ready to submit your request with the following details \U0001F447 " +
-                        "\r\r The Site Collection Admin is {SPOUserID} and you want to update storage quota for the Site Collection '{SiteCollectionURL}'. " +
+                        "\r\r Your id is {SPOUserID} and you want to update storage quota for the Site Collection '{SiteCollectionURL}'. " +
                         "\r\r Is that correct?")
                 .OnCompletion(processStorageQuota)
                 .Message("Thank you! I have submitted your request.")

@@ -28,21 +28,22 @@ namespace Avanade.LAM.CollabBOT.Dialogs
                            "* Profile Updates \n" +
                            "* User Guides/ KB Articles \n";
 
-            if (message.Text.ToLower().Equals("no"))
+            if (message.Text.ToLower().Equals("yes") || message.Text.ToLower().Equals("yep") || message.Text.ToLower().Equals("yup") || message.Text.ToLower().Equals("yeah"))
+            {               
+
+                await context.PostAsync("Sure, I can raise a ticket on Service Now, before that I need few inputs from you.");
+
+                var ServiceNowFormDialog = FormDialog.FromForm(this.BuildServiceNowForm, FormOptions.PromptInStart);
+
+                context.Call(ServiceNowFormDialog, this.ResumeServiceNowDialog);
+            }
+            else
             {
                 await context.PostAsync(string.Format("Okay. Let us start over. I can help you with popular Support Requests such as: " +
                        "\r\r" + options +
                        "\r\r Please type any of the above keywords or any other query you may have."));
 
                 context.Done("service now exited with no");
-            }
-            else
-            {
-                await context.PostAsync("Sure, I can raise a ticket on Service Now, before that I need few inputs from you.");
-
-                var ServiceNowFormDialog = FormDialog.FromForm(this.BuildServiceNowForm, FormOptions.PromptInStart);
-
-                context.Call(ServiceNowFormDialog, this.ResumeServiceNowDialog);
 
             }
         }

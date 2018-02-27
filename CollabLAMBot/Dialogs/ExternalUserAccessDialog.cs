@@ -2,6 +2,7 @@
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.FormFlow;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 
@@ -29,16 +30,56 @@ namespace CollabLAMBot.Dialogs
                 string _strURL = resultFromExtrnalSharing.SiteCollectionURL;
                 string _strUserID = resultFromExtrnalSharing.SPOExternalUserID;
                 bool _isPermissionGranted = false;
+                bool _isSiteCollectionSharingEnabled = false;
+                bool _isTenantSharingEnabled = false;
 
                 try
                 {
-                    SharePointPrimary obj = new SharePointPrimary();
-                    _isPermissionGranted = obj.IsTenantExternalSharingEnabled(_strURL, _strUserID);
-                    context.Done("Access granted.");
-                    if (_isPermissionGranted)
-                        await context.PostAsync($"Access granted \U00002705 Please browse the site url '{_strURL}' ");
+                    SharePointPrimary obj = new SharePointPrimary(_strURL);
+
+                    List<string> lstSiteCollectionAdmins = new List<string>();
+                    lstSiteCollectionAdmins = obj.GetSiteCollectionAdmins();
+                    string strSiteCollectionAdmins = string.Empty;
+
+                    foreach (var eachAdmin in lstSiteCollectionAdmins)
+                    {
+                        strSiteCollectionAdmins += eachAdmin + "; ";
+                    }
+
+                    _isTenantSharingEnabled = obj.IsTenantExternalSharingEnabled();
+                    if(_isTenantSharingEnabled)
+                    {
+                        _isSiteCollectionSharingEnabled = obj.IsSiteCollectionExternalSharingEnabled(_strURL);
+                        if (_isSiteCollectionSharingEnabled)
+                        {
+                            _isPermissionGranted = obj.HasAccessGrantedToExternalUser(_strURL, _strUserID);
+                            
+                            if (_isPermissionGranted)
+                            {
+                                await context.PostAsync($"Access granted \U00002705 An email is sent to '{_strUserID}' ");
+                                context.Done("External Access granted.");
+                            }
+                            else
+                            {
+                                await context.PostAsync("Permission could not be granted \U0001F641 Please try again later.");
+                                context.Done("External Access could not be granted.");
+                            }
+                        }
+                        else
+                        {                            
+                            await context.PostAsync($"Access could not be granted \U0001F641 External Sharing is disabled for this Site Collection.");
+                            await context.PostAsync($"Please reach out to one of the Site Collection Adminstrators listed below:" +
+                               "\r\r" + strSiteCollectionAdmins);
+                            context.Done("Access could not be granted. External Sharing is disabled for this Site Collection.");
+                        }
+                    }
                     else
-                        await context.PostAsync("Permission could not be granted \U0001F641 . Please try again later.");
+                    {                        
+                        await context.PostAsync($"Access could not be granted \U00002705 External Sharing is disabled at our Tenant level. ");
+                        await context.PostAsync($"Please reach out to one of the Site Collection Adminstrators listed below:" +
+                               "\r\r" + strSiteCollectionAdmins);
+                        context.Done("Access could not be granted. External Sharing is disabled at our Tenant level.");
+                    }                   
                 }
                 catch(Exception)
                 {
@@ -98,7 +139,7 @@ namespace CollabLAMBot.Dialogs
             [Prompt("Please enter the Site Collection URL.")]
             public string SiteCollectionURL { get; set; }
 
-            [Prompt("Please enter your id.")]
+            [Prompt("Could you please help me with your id?")]
             public string SPOExternalUserID { get; set; }
 
             

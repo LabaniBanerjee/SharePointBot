@@ -15,6 +15,8 @@ namespace CollabLAMBot.Dialogs
         {
             await context.PostAsync("Sure, I can help you with Site Creation, before that I need 2 inputs from you.");
 
+           // await context.PostAsync("Sure, I can help you with Site Creation, before that I need 2 inputs from you.[hello](https://www.microsoft.com)");
+
             var SiteCreationFormDialog = FormDialog.FromForm(this.BuildSiteCreationForm, FormOptions.PromptInStart);
 
             context.Call(SiteCreationFormDialog, this.ResumeSiteCreationDialog);            
@@ -46,8 +48,10 @@ namespace CollabLAMBot.Dialogs
                         var replyMessage = context.MakeMessage();
                         replyMessage.Attachments = new List<Attachment> { attachment };
 
-                        await context.PostAsync("I have started creating your site collection. It may take 5 - 10 minutes to complete the process.");
-                        await context.PostAsync("Please browse the site '" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + "' after sometime.");
+                        await context.PostAsync("I have started creating your site collection. It may take 5 - 10 minutes to complete the process."+
+                            "\r\r Please browse the site ['" + _strSiteTitle + "'](" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + ") after sometime.");
+                        //await context.PostAsync("Please browse the site '" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + "' after sometime.");
+
 
                     }
                     catch (Exception)

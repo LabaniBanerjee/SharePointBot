@@ -195,8 +195,15 @@ namespace CollabLAMBot.Dialogs
 
             try
             {
-                var myresult = await result;                              
-                //await context.PostAsync($"I am Luis Main Dialog. I have message for you : {myresult}");                
+                var myresult = await result;
+                
+                if (!(myresult.Equals("Greeting") || myresult.Equals("service now exited with no") || myresult.Equals("Farewell")))
+                {
+                    await context.PostAsync("Hope I am able to assist you on your request. However, I can help you with some other popular Support Requests too such as: " +
+                     "\r\r" + options +
+                            "\r\r Please type any of the above keywords or any other query you may have.");
+                }
+
             }
             catch (FormCanceledException)
             {

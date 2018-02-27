@@ -29,7 +29,7 @@ namespace Avanade.LAM.CollabBOT.Dialogs
 
             await context.PostAsync("Thanks for using SharePoint Help Assistant!" +
                "\r\r Bye \U0001F44B . Have a great day ahead.");
-            context.Done("Farewell");
+            context.Done("Greeting");
 
         }
     }

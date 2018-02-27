@@ -9,8 +9,7 @@ namespace Avanade.LAM.CollabBOT.Dialogs
     {
         public async Task StartAsync(IDialogContext context)
         {
-            await context.PostAsync("You are most welcome! \U0001F642 " + 
-                "\r\r Let me know if I can help you with anything else.");
+            await context.PostAsync("You are most welcome! \U0001F642 ");
             context.Done("");
 
         }

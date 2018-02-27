@@ -13,6 +13,8 @@ using System.Management.Automation.Runspaces;
 using System.Security;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using SharePointPnP;
+
 
 namespace CollabLAMBot.LAM
 {
@@ -112,14 +114,15 @@ namespace CollabLAMBot.LAM
                     Tenant currentO365Tenant = new Tenant(clientContext);
                     clientContext.ExecuteQuery();
 
+                    /*make UserCodeMaximumLevel 1 once license is restored*/
                     var newsite = new SiteCreationProperties()
                     {
                         Url = Constants.RootSiteCollectionURL+Constants.ManagedPath+_strSiteTitle,
                         Owner = _strPrimaryAdmin,
                         Template = "STS#0",
                         StorageMaximumLevel = 2,
-                        UserCodeMaximumLevel = 1,
-                        UserCodeWarningLevel = 1,
+                        UserCodeMaximumLevel = 0, 
+                        UserCodeWarningLevel = 0, 
                         StorageWarningLevel = 1,
                         Title = _strSiteTitle+"_createdByBot",
                         CompatibilityLevel = 15,                        
@@ -592,9 +595,9 @@ namespace CollabLAMBot.LAM
             return _userPermissions;
         }
 
-        public bool IsTenantExternalSharingEnabled(string _inputSiteCollectionUrl, string _strUserID)
+        public bool IsTenantExternalSharingEnabled()
         {
-            bool isExternalShaingEnabled = false;
+            bool isTenantExternalShaingEnabled = false;
             string siteCollectionUrl = SPOAdminURL;
             string message = string.Empty;
 
@@ -607,38 +610,15 @@ namespace CollabLAMBot.LAM
                     Tenant currentO365Tenant = new Tenant(clientContext);
                     clientContext.Load(currentO365Tenant, O365t => O365t.SharingCapability);
                     clientContext.ExecuteQuery();
-
-
+                    
                     SharingCapabilities _tenantSharing = currentO365Tenant.SharingCapability;
                     if (_tenantSharing == SharingCapabilities.Disabled)
                     {
                         message = "Sharing is currently disabled in our tenant.";
-                        isExternalShaingEnabled = false;
+                        isTenantExternalShaingEnabled = false;
                     }
                     else
-                    {
-                        SiteProperties _siteprops = currentO365Tenant.GetSitePropertiesByUrl(_inputSiteCollectionUrl, true);
-                        clientContext.Load(_siteprops);
-                        clientContext.ExecuteQuery();
-
-                        var _currentShareSettings = _siteprops.SharingCapability;
-
-                        _siteprops.SharingCapability = _tenantSharing;
-                        _siteprops.Update();
-                        clientContext.ExecuteQuery();
-
-                        var users = new List<UserRoleAssignment>();
-                        users.Add(new UserRoleAssignment()
-                        {
-                            UserId = _strUserID,
-                            Role = Role.View
-                        });
-
-                        WebSharingManager.UpdateWebSharingInformation(clientContext, clientContext.Web, users, true, null, true, true);
-                        clientContext.ExecuteQuery();
-
-                    }
-
+                        isTenantExternalShaingEnabled = true;
                 }
             }
             catch(Exception ex)
@@ -646,8 +626,81 @@ namespace CollabLAMBot.LAM
                 message = ex.Message;
             }
 
-                return isExternalShaingEnabled;
+           return isTenantExternalShaingEnabled;
+        }
 
+        public bool IsSiteCollectionExternalSharingEnabled(string _inputSiteCollectionUrl)
+        {
+            bool isSiteCollectionExternalShaingEnabled = false;
+            string siteCollectionUrl = SPOAdminURL;
+            string message = string.Empty;
+
+            ClientContext clientContext;
+            try
+            {
+                using (clientContext = GetClientContext(siteCollectionUrl, clientID, clientSecret))
+                {
+                    clientContext.ExecuteQuery();
+                    Tenant currentO365Tenant = new Tenant(clientContext);
+                    clientContext.Load(currentO365Tenant, O365t => O365t.SharingCapability);
+                    clientContext.ExecuteQuery();
+                   
+                    SiteProperties _siteprops = currentO365Tenant.GetSitePropertiesByUrl(_inputSiteCollectionUrl, true);
+                    clientContext.Load(_siteprops);
+                    clientContext.ExecuteQuery();
+
+                    var _currentShareSettings = _siteprops.SharingCapability;
+                    if (_currentShareSettings == SharingCapabilities.Disabled)
+                    {
+                        isSiteCollectionExternalShaingEnabled = false;
+                    }
+                    else
+                        isSiteCollectionExternalShaingEnabled = true;                       
+
+                }
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }
+
+            return isSiteCollectionExternalShaingEnabled;
+
+        }
+
+        public bool HasAccessGrantedToExternalUser(string _inputSiteCollectionUrl, string _strUserID)
+        {
+            bool isAccessGranted = false;
+            string siteCollectionUrl = _inputSiteCollectionUrl;
+            string message = string.Empty;
+
+            ClientContext clientContext;
+            try
+            {
+                using (clientContext = GetClientContext(siteCollectionUrl, clientID, clientSecret))
+                {                   
+
+                    var users = new List<UserRoleAssignment>();
+                    users.Add(new UserRoleAssignment()
+                    {
+                        UserId = _strUserID,
+                        Role = Role.Edit
+                    });
+
+                    WebSharingManager.UpdateWebSharingInformation(clientContext, clientContext.Web, users, true, "Access given by SOHA", true, true);
+                    clientContext.ExecuteQuery();
+                    isAccessGranted = true;
+
+                    //string link = clientContext.Web.CreateAnonymousLinkForDocument("https://tenantname.sharepoint.com/Documents/sample.docx", ExternalSharingDocumentOption.View);
+                    //SharingResult result = clientContext.Web.ShareDocument("https://tenantname.sharepoint.com/Documents/sample.docx", "someone@example.com", ExternalSharingDocumentOption.View, true, "Doc shared programmatically");
+                }
+            }
+            catch(Exception ex)
+            {
+                isAccessGranted = false;
+            }
+
+            return isAccessGranted;
         }
 
         public List<string> GetSiteCollectionAdmins()
@@ -720,7 +773,6 @@ namespace CollabLAMBot.LAM
             }
             return lstSiteCollectionAdmins;
         }
-
 
         public string GetSiteCollectionAdminsByPowerShell()
         {

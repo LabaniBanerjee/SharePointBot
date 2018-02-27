@@ -30,7 +30,7 @@ namespace Avanade.LAM.CollabBOT.Dialogs
                  "\r\r I can help you with popular Support Requests such as: " +
                  "\r\r" + options +               
                   "\r\r Please type any of the above keywords or any other query you may have.");
-            context.Done("");
+            context.Done("Greeting");
         }
 
         private static async Task Respond(IDialogContext context)
