@@ -49,7 +49,7 @@ namespace CollabLAMBot.Dialogs
                         replyMessage.Attachments = new List<Attachment> { attachment };
 
                         await context.PostAsync("I have started creating your site collection. It may take 5 - 10 minutes to complete the process."+
-                            "\r\r Please browse the site ['" + _strSiteTitle + "'](" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + ") after sometime.");
+                            "\r\r Please browse the site ['SOHA_" + _strSiteTitle + "'](" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + ") after sometime.");
                         //await context.PostAsync("Please browse the site '" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + "' after sometime.");
 
 
@@ -80,7 +80,7 @@ namespace CollabLAMBot.Dialogs
                 .Field(nameof(SiteCreationQuery.PrimarySiteCollectionAdmin), validate: ValidatePrimaryAdmin)               
                 .AddRemainingFields()
                 .Confirm("Great. I am ready to submit your request with the following details \U0001F447 " +
-                        "\r\r The new site collection URL will be '" + Constants.RootSiteCollectionURL+ ""+Constants.ManagedPath+"{SiteCollectionTitle} '"+
+                        "\r\r The new site collection URL will be '" + Constants.RootSiteCollectionURL+ ""+Constants.ManagedPath+"SOHA_{SiteCollectionTitle} '"+
                         "\r\r and the primary administartor {PrimarySiteCollectionAdmin}. " +
                         "\r\r Is that correct?")
                 .OnCompletion(processUserAccessSearch)

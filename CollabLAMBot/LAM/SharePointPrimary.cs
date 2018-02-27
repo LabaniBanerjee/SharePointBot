@@ -117,14 +117,14 @@ namespace CollabLAMBot.LAM
                     /*make UserCodeMaximumLevel 1 once license is restored*/
                     var newsite = new SiteCreationProperties()
                     {
-                        Url = Constants.RootSiteCollectionURL+Constants.ManagedPath+_strSiteTitle,
+                        Url = Constants.RootSiteCollectionURL+Constants.ManagedPath+"SOHA_"+_strSiteTitle,
                         Owner = _strPrimaryAdmin,
                         Template = "STS#0",
                         StorageMaximumLevel = 2,
                         UserCodeMaximumLevel = 0, 
                         UserCodeWarningLevel = 0, 
                         StorageWarningLevel = 1,
-                        Title = _strSiteTitle+"_createdByBot",
+                        Title = "SOHA_"+_strSiteTitle,
                         CompatibilityLevel = 15,                        
 
                     };
