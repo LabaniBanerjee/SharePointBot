@@ -226,11 +226,15 @@
   <ItemGroup>
     <Content Include="assets\images\AvanadeBrowserIcon.ico" />
     <Content Include="assets\images\background.png" />
+    <Content Include="assets\images\CompleteGuideOnSiteAccess.jpg" />
     <Content Include="assets\images\favicon.png" />
+    <Content Include="assets\images\HowtoUpdateSiteStorage.jpg" />
     <Content Include="assets\images\logo.png" />
     <Content Include="assets\images\logo_avanade.png" />
     <Content Include="assets\images\logo_avanade_new.png" />
     <Content Include="assets\images\logo_chat.png" />
+    <Content Include="assets\images\O365LicenseGuide.jpg" />
+    <Content Include="assets\images\StepbyStepProcedureOnSiteAccess.jpg" />
     <Content Include="assets\stylesheets\styles.css" />
     <Content Include="Chat.html" />
     <Content Include="default.htm" />

@@ -42,7 +42,7 @@ namespace CollabLAMBot.Dialogs
                             context.Done("Storage Quota Updated.");
                             if (isStorageUpdated)
                             {
-                                await context.PostAsync("The Storage Quota for the Site Collection is being updated. Please refresh the site after sometime.");
+                                await context.PostAsync($"The Storage Quota for the Site Collection '{_strURL}' is being updated. Please refresh it after sometime.");
                             }
                             else
                                 await context.PostAsync("Storage quota could not be updated \U0001F641 . Please try again later.");
@@ -96,7 +96,7 @@ namespace CollabLAMBot.Dialogs
                         "\r\r Your id is {SPOUserID} and you want to update storage quota for the Site Collection '{SiteCollectionURL}'. " +
                         "\r\r Is that correct?")
                 .OnCompletion(processStorageQuota)
-                .Message("Thank you! I have submitted your request.")
+                .Message("Thank you!")
                 .Build();
         }
 

@@ -199,7 +199,9 @@ namespace CollabLAMBot.Dialogs
                 
                 if (!(myresult.Equals("Greeting") || myresult.Equals("service now exited with no") || myresult.Equals("Farewell")))
                 {
-                    await context.PostAsync("Hope I am able to assist you on your request. However, I can help you with some other popular Support Requests too such as: " +
+                    await context.PostAsync("Hope I am able to assist you on your request.");
+
+                    await context.PostAsync("However, I can help you with some other popular Support Requests too such as: " +
                      "\r\r" + options +
                             "\r\r Please type any of the above keywords or any other query you may have.");
                 }

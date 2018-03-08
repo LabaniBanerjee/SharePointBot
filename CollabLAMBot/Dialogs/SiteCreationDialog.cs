@@ -103,7 +103,7 @@ namespace CollabLAMBot.Dialogs
                 if (!result.IsValid)
                     result.Feedback = $"A site collection with url '{_inputSiteCollectionTitle}' is already present in our tenant. Try something different.";
                 else
-                    result.Feedback = "The site collection url looks fine.";
+                    result.Feedback = "The site title is available to use.";
             }
             else
             {

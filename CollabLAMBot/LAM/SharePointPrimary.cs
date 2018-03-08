@@ -61,7 +61,7 @@ namespace CollabLAMBot.LAM
                         clientContext.Load(propertyColl);
                         clientContext.ExecuteQuery();
 
-                        propertyColl.Title += "_storage Updated By Bot";
+                        //propertyColl.Title += "_storage Updated By Bot";
                         propertyColl.StorageMaximumLevel += (_intNewQuota * 1024);                        
                         propertyColl.Update();
 
@@ -221,10 +221,13 @@ namespace CollabLAMBot.LAM
             return isSiteCollectionURLExisting;
         }
 
-        public Dictionary<string, string> SearchHelpArticleonTopic(int _inputHelpArticle)
+        public /*Dictionary<string, string>*/ List<ListItem> SearchHelpArticleonTopic(string _strhelpArticle)
         {
-            string siteCollectionUrl = "https://avaindcollabsl.sharepoint.com";
+            string siteCollectionUrl = "https://avaindcollabsl.sharepoint.com/sites/SOHA_HelpRepository/";
             Dictionary<string, string> searchedDocs = new Dictionary<string, string>();
+
+           
+            List<ListItem> currentSearchTopics = new List<ListItem>();
 
             try
             {
@@ -242,7 +245,9 @@ namespace CollabLAMBot.LAM
 
                     camlQuery.ViewXml = "<View Scope=\"RecursiveAll\">"
                                 + "<ViewFields><FieldRef Name=\"Title\"/>"
-                                + "<FieldRef Name=\"Topic\"/>"                             
+                                + "<FieldRef Name=\"Tags\"/>"
+                                + "<FieldRef Name=\"Description\"/>"
+                                + "<FieldRef Name=\"ThumbnailURL\"/>"
                                 + "<FieldRef Name=\"Modified\"/></ViewFields>"
                                 + "<RowLimit>500</RowLimit></View>";
 
@@ -260,13 +265,13 @@ namespace CollabLAMBot.LAM
                     List<ListItem> lstListItemCollection = new List<ListItem>();
                     lstListItemCollection.AddRange(articleCollection);
 
-                    List<ListItem> currentSearchTopics = new List<ListItem>();
-                    currentSearchTopics = lstListItemCollection.FindAll(a => Convert.ToString(a.FieldValuesAsHtml["Topic"]).Contains(_inputHelpArticle.ToString()));
+                    
+                    currentSearchTopics = lstListItemCollection.FindAll(a => Convert.ToString(a.FieldValuesAsHtml["Tags"]).Contains(_strhelpArticle.ToLower()));
                     if (currentSearchTopics != null && currentSearchTopics.Count > 0)
                     {
                         foreach (ListItem eachFoundArticle in currentSearchTopics)
                         {
-                            searchedDocs.Add(eachFoundArticle.DisplayName, siteCollectionUrl+""+eachFoundArticle.File.ServerRelativeUrl);
+                            searchedDocs.Add(eachFoundArticle.DisplayName, Constants.RootSiteCollectionURL+eachFoundArticle.File.ServerRelativeUrl);                          
                         }
                     }
                 }
@@ -275,7 +280,7 @@ namespace CollabLAMBot.LAM
             {
 
             }
-            return searchedDocs;
+            return currentSearchTopics;
 
         }
 
