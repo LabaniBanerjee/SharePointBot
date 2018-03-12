@@ -57,28 +57,32 @@ namespace CollabLAMBot.Dialogs
                             if (_isPermissionGranted)
                             {
                                 await context.PostAsync($"Access granted \U00002705 An email is sent to '{_strUserID}' ");
-                                context.Done("External Access granted.");
+                                //context.Done("External Access granted.");
+                                context.Done("Done");
                             }
                             else
                             {
-                                await context.PostAsync("Permission could not be granted \U0001F641 Please try again later.");
-                                context.Done("External Access could not be granted.");
+                                await context.PostAsync("Permission could not be granted. Please try again later.");
+                                //context.Done("External Access could not be granted.");
+                                context.Done("Not Done");
                             }
                         }
                         else
                         {                            
-                            await context.PostAsync($"Access could not be granted \U0001F641 External Sharing is disabled for this Site Collection.");
+                            await context.PostAsync($"Access could not be granted as External Sharing is disabled for this Site Collection.");
                             await context.PostAsync($"Please reach out to one of the Site Collection Adminstrators listed below:" +
                                "\r\r" + strSiteCollectionAdmins);
-                            context.Done("Access could not be granted. External Sharing is disabled for this Site Collection.");
+                            //context.Done("Access could not be granted. External Sharing is disabled for this Site Collection.");
+                            context.Done("Not Done");
                         }
                     }
                     else
                     {                        
-                        await context.PostAsync($"Access could not be granted \U00002705 External Sharing is disabled at our Tenant level. ");
+                        await context.PostAsync($"Access could not be granted as External Sharing is disabled at our Tenant level. ");
                         await context.PostAsync($"Please reach out to one of the Site Collection Adminstrators listed below:" +
                                "\r\r" + strSiteCollectionAdmins);
-                        context.Done("Access could not be granted. External Sharing is disabled at our Tenant level.");
+                        //context.Done("Access could not be granted. External Sharing is disabled at our Tenant level.");
+                        context.Done("Not Done");
                     }                   
                 }
                 catch(Exception)

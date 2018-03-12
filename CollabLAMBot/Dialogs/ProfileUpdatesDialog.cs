@@ -11,7 +11,7 @@ namespace CollabLAMBot.Dialogs
         public async Task StartAsync(IDialogContext context)
         {
             await context.PostAsync("Sorry, I am unable to update your profile at the moment. Please select another option. ");
-            context.Done("false");
+            context.Done("Not Done");
             //context.Wait(MessageReceived);
         }
 

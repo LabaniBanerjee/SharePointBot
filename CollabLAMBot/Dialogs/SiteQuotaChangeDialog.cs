@@ -39,13 +39,17 @@ namespace CollabLAMBot.Dialogs
                         if (isSiteCollectionAdmin)
                         {
                             bool isStorageUpdated = obj.IsSiteCollectionStorageQuotaUpdated(_strURL, _intNewQuota);
-                            context.Done("Storage Quota Updated.");
+                            //context.Done("Storage Quota Updated.");
                             if (isStorageUpdated)
                             {
                                 await context.PostAsync($"The Storage Quota for the Site Collection '{_strURL}' is being updated. Please refresh it after sometime.");
+                                context.Done("Done");
                             }
                             else
+                            {
                                 await context.PostAsync("Storage quota could not be updated \U0001F641 . Please try again later.");
+                                context.Done("Not Done");
+                            }
                         }
                         else
                         {
@@ -58,11 +62,11 @@ namespace CollabLAMBot.Dialogs
                                 strSiteCollectionAdmins += eachAdmin+ ";";
                             }
 
-                            await context.PostAsync($"Sorry \U0001F641 I just found out that you are not authorized to update the Storage Quota of the Site Collection '{_strURL}'");
+                            await context.PostAsync($"I just found out that you are not authorized to update the Storage Quota of the Site Collection '{_strURL}'");
                             await context.PostAsync($"Please reach out to one of the Site Collection Adminstrators listed below:" +
                                 "\r\r"+ strSiteCollectionAdmins);
 
-                            context.Done("Storage Quota Not Updated.");
+                            context.Done("Not Done");
                         }
                     }
                     catch(Exception)

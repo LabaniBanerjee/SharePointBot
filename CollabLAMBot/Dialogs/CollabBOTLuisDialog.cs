@@ -61,7 +61,8 @@ namespace CollabLAMBot.Dialogs
                         "\r\r Do you want me to raise a service request for the same?");
 
             context.Call(new ServiceNowDialog(), Callback);
-        }        
+        }      
+
 
         [LuisIntent("ArticleSearch")]
         public async Task ArticleSearch(IDialogContext context, LuisResult result)
@@ -197,13 +198,15 @@ namespace CollabLAMBot.Dialogs
             {
                 var myresult = await result;
                 
-                if (!(myresult.Equals("Greeting") || myresult.Equals("service now exited with no") || myresult.Equals("Farewell")))
+                //if (!(myresult.Equals("Greeting") || myresult.Equals("service now exited with no") || myresult.Equals("Farewell")))
+                if(myresult.Equals("Done"))
                 {
                     await context.PostAsync("Hope I am able to assist you on your request.");
-
-                    await context.PostAsync("However, I can help you with some other popular Support Requests too such as: " +
-                     "\r\r" + options +
-                            "\r\r Please type any of the above keywords or any other query you may have.");
+                  
+                }
+                else if (myresult.Equals("Not Done"))
+                {
+                    await context.PostAsync("Sorry \U0001F641 , I am unable to assist you. Let us try again.");
                 }
 
             }

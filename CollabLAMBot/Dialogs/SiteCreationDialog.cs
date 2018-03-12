@@ -36,9 +36,7 @@ namespace CollabLAMBot.Dialogs
                     try
                     {
                         
-                        Task<bool> _isCreated = obj.IsSiteCollectionCreated(_strSiteTitle, _strPrimaryAdmin);
-
-                        context.Done("Site collection is getting created");
+                        Task<bool> _isCreated = obj.IsSiteCollectionCreated(_strSiteTitle, _strPrimaryAdmin);                        
 
                         Attachment attachment = new Attachment();
                         attachment.ContentType = "application/pdf";
@@ -51,7 +49,7 @@ namespace CollabLAMBot.Dialogs
                         await context.PostAsync("I have started creating your site collection. It may take 5 - 10 minutes to complete the process."+
                             "\r\r Please browse the site ['SOHA_" + _strSiteTitle + "'](" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + ") after sometime.");
                         //await context.PostAsync("Please browse the site '" + Constants.RootSiteCollectionURL + "" + Constants.ManagedPath + "" + _strSiteTitle + "' after sometime.");
-
+                        context.Done("Done");
 
                     }
                     catch (Exception)

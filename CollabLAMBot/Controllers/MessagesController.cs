@@ -144,7 +144,7 @@ namespace CollabLAMBot
             else if (message.Type == ActivityTypes.ContactRelationUpdate)
             {
                 // Handle add/remove from contact lists
-                // Activity.From + Activity.Action represent what happened
+                // Activity.From + Activity.Action represent what happened                
             }
             else if (message.Type == ActivityTypes.Typing)
             {

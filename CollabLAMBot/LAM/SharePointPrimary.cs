@@ -221,12 +221,14 @@ namespace CollabLAMBot.LAM
             return isSiteCollectionURLExisting;
         }
 
-        public /*Dictionary<string, string>*/ List<ListItem> SearchHelpArticleonTopic(string _strhelpArticle)
+        public Dictionary<ListItem, string> /*List<ListItem>*/ SearchHelpArticleonTopic(string _strhelpArticle)
         {
             string siteCollectionUrl = "https://avaindcollabsl.sharepoint.com/sites/SOHA_HelpRepository/";
-            Dictionary<string, string> searchedDocs = new Dictionary<string, string>();
+            //Dictionary<string, string> searchedDocs = new Dictionary<string, string>();
 
-           
+            Dictionary<ListItem, string> searchedDocs = new Dictionary<ListItem, string>();
+
+
             List<ListItem> currentSearchTopics = new List<ListItem>();
 
             try
@@ -247,7 +249,7 @@ namespace CollabLAMBot.LAM
                                 + "<ViewFields><FieldRef Name=\"Title\"/>"
                                 + "<FieldRef Name=\"Tags\"/>"
                                 + "<FieldRef Name=\"Description\"/>"
-                                + "<FieldRef Name=\"ThumbnailURL\"/>"
+                                + "<FieldRef Name=\"ThumbnailURL\"/>"                                
                                 + "<FieldRef Name=\"Modified\"/></ViewFields>"
                                 + "<RowLimit>500</RowLimit></View>";
 
@@ -271,7 +273,16 @@ namespace CollabLAMBot.LAM
                     {
                         foreach (ListItem eachFoundArticle in currentSearchTopics)
                         {
-                            searchedDocs.Add(eachFoundArticle.DisplayName, Constants.RootSiteCollectionURL+eachFoundArticle.File.ServerRelativeUrl);                          
+                            //searchedDocs.Add(eachFoundArticle.DisplayName, Constants.RootSiteCollectionURL+eachFoundArticle.File.ServerRelativeUrl);
+                            ClientResult<string> previewURL = eachFoundArticle.File.GetImagePreviewUri(20, 20, "GetImagePreviewUri");
+                         
+
+                            ClientResult<string> previewURI = eachFoundArticle.File.GetImagePreviewUrl(40, 40, "GetImagePreviewUrl");
+                           
+                            var wopiFrameUrl = eachFoundArticle.GetWOPIFrameUrl(Microsoft.SharePoint.Client.Utilities.SPWOPIFrameAction.InteractivePreview);
+                            clientContext.ExecuteQuery();
+
+                            searchedDocs.Add(eachFoundArticle, previewURL.Value.ToString());
                         }
                     }
                 }
@@ -280,7 +291,8 @@ namespace CollabLAMBot.LAM
             {
 
             }
-            return currentSearchTopics;
+            //return currentSearchTopics;
+            return searchedDocs;
 
         }
 

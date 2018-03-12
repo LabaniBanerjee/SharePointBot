@@ -6440,7 +6440,7 @@ body {
     background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.2) 100%);
     /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */ }
     body .site-wrapper .content-wrapper {
-      height: 100vh;
+      height: 100Vh;
       padding: 20% 0;
       -webkit-display: flex;
       -moz-display: flex;
@@ -6452,11 +6452,11 @@ body {
       -ms-flex-direction: column;
       -o-flex-direction: column;
       flex-direction: column;
-      -webkit-justify-content: space-between;
-      -moz-justify-content: space-between;
-      -ms-justify-content: space-between;
-      -o-justify-content: space-between;
-      justify-content: space-between; }
+      /*-webkit-justify-content:space-between;
+      -moz-justify-content:space-between;
+      -ms-justify-content:space-between;
+      -o-justify-content:space-between;
+      justify-content: pace-between;*/ }
       body .site-wrapper .content-wrapper aside {
         font-size: 27px; }
         body .site-wrapper .content-wrapper aside h1 {
@@ -6479,8 +6479,9 @@ body {
       body .site-wrapper .content-wrapper footer img {
         padding-right: 30px; }
     body .site-wrapper .bot {
-      height: 100vh;
+      height: 725px;
       padding: 20% 0;
+      padding-top:calc(20% + 30px);      
       -webkit-display: flex;
       -moz-display: flex;
       -ms-display: flex;

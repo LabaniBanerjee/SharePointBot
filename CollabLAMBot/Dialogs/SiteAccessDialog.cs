@@ -87,11 +87,17 @@ namespace CollabLAMBot.Dialogs
                     try
                     {
                         _isPermissionGranted = obj.HasPermissionGrantedToUser(_strURL, _strUserID, _intRoleype);
-                        context.Done("Access granted.");
+                        
                         if (_isPermissionGranted)
+                        {
                             await context.PostAsync($"Access granted \U00002705 Please browse the site url '{_strURL}' ");
+                            context.Done("Done");
+                        }
                         else
+                        {
                             await context.PostAsync("Permission could not be granted \U0001F641 . Please try again later.");
+                            context.Done("not done");
+                        }
 
                     }
                     catch(Exception ex)
@@ -195,7 +201,7 @@ namespace CollabLAMBot.Dialogs
             Contributor = 3,
             [Describe("Web Designer")]
             WebDesigner = 4,
-            [Describe("Site Collection Administrator")]
+            [Describe("Administrator")]
             Administrator = 5,
             Editor = 6
         }

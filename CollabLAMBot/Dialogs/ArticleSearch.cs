@@ -12,6 +12,7 @@ using CollabLAMBot.LAM;
 using Microsoft.Bot.Connector;
 using Microsoft.SharePoint.Client;
 using Avanade.LAM.CollabBOT.LAM;
+using System.Net;
 
 namespace Avanade.LAM.CollabBOT.Dialogs
 {
@@ -89,7 +90,7 @@ namespace Avanade.LAM.CollabBOT.Dialogs
                 try
                 {
                     SharePointPrimary obj = new SharePointPrimary();
-                    List<ListItem> searchedDocs = new List<ListItem>();
+                    Dictionary<ListItem, string> searchedDocs = new Dictionary<ListItem, string>();
 
                     if (_strhelpArticle.ToLower().Contains("video"))
                     {
@@ -129,7 +130,7 @@ namespace Avanade.LAM.CollabBOT.Dialogs
                         replyMessage.Attachments.Add(attachment);
 
                         await context.PostAsync(replyMessage);
-                        context.Done("video played");
+                        context.Done("Done");
                     }
                     else
                     {
@@ -141,8 +142,8 @@ namespace Avanade.LAM.CollabBOT.Dialogs
                             else
                                 await context.PostAsync($"I have found {searchedDocs.Count} articles on your search topic \U0001F44D ");
 
-
-                            foreach (ListItem eachDoc in searchedDocs)
+                            foreach (var eachDoc in searchedDocs)
+                            //foreach (ListItem eachDoc in searchedDocs)
                             {
                                 Microsoft.Bot.Connector.Attachment attachment = new Microsoft.Bot.Connector.Attachment();
                                 //attachment.ContentType = "application/pdf";
@@ -152,16 +153,17 @@ namespace Avanade.LAM.CollabBOT.Dialogs
                                 var replyMessage = context.MakeMessage();
                                 //replyMessage.Attachments = new List<Attachment> { attachment };
                                 //await context.PostAsync(replyMessage);
-
+                                                               
 
                                 var heroCard = new HeroCard
                                 {
-                                    Title = eachDoc.DisplayName,
+                                    Title = eachDoc.Key.DisplayName,
                                     Subtitle = "by Avanade Collab SL Capability",
-                                    Text = eachDoc.FieldValuesAsHtml["KpiDescription"],
+                                    Text = eachDoc.Key.FieldValuesAsHtml["KpiDescription"],
                                     //Images = new List<CardImage> { new CardImage("https://sec.ch9.ms/ch9/7ff5/e07cfef0-aa3b-40bb-9baa-7c9ef8ff7ff5/buildreactionbotframework_960.jpg") },
-                                    Images = new List<CardImage> {new CardImage (eachDoc.FieldValuesAsHtml["ThumbnailURL"]) },
-                                    Buttons = new List<CardAction> { new CardAction(ActionTypes.OpenUrl, "Read more", value: Constants.RootSiteCollectionURL + eachDoc.File.ServerRelativeUrl) }
+                                    //Images = new List<CardImage> {new CardImage (eachDoc.Key.FieldValuesAsHtml["ThumbnailURL"]) },
+                                    Images = new List<CardImage> { new CardImage(eachDoc.Value.ToString()) },
+                                    Buttons = new List<CardAction> { new CardAction(ActionTypes.OpenUrl, "Read more", value: Constants.RootSiteCollectionURL + eachDoc.Key.File.ServerRelativeUrl) }
                                 };
 
 
@@ -171,12 +173,14 @@ namespace Avanade.LAM.CollabBOT.Dialogs
                                 await context.PostAsync(replyMessage);
 
                             }
-                            context.Done("article found");
+                           
+                            context.Done("Done");
                         }
                         else
                         {
-                            await context.PostAsync($"No document found \U0001F641 ");
-                            context.Done("article not found");
+                            await context.PostAsync($"No document found. Do you want to search for any other topic?");
+                            //context.Done("Not Done");
+                            context.Wait(MessageReceived);
                         }
                     }                   
                 }
@@ -189,6 +193,27 @@ namespace Avanade.LAM.CollabBOT.Dialogs
             {
                 await context.PostAsync("Sorry \U0001F641 , I am unable to understand you. Let us try again.");
             }
+        }
+
+
+        private async Task MessageReceived(IDialogContext context, IAwaitable<object> result)
+        {
+            var message = await result as Activity;
+            
+
+            if (message.Text.ToLower().Equals("yes") || message.Text.ToLower().Equals("yep") 
+                || message.Text.ToLower().Equals("yup") || message.Text.ToLower().Equals("yeah")
+                || message.Text.ToLower().Equals("y"))
+            {
+                var articleSearchFormDialog = FormDialog.FromForm(this.BuildSearchArticleForm, FormOptions.PromptInStart);
+
+                context.Call(articleSearchFormDialog, this.ResumeArticleSearchDialog);
+            }
+            else
+            {
+                context.Done("Not Done");
+            }
+
         }
 
         private IForm<ArticleSearchQuery> BuildSearchArticleForm()

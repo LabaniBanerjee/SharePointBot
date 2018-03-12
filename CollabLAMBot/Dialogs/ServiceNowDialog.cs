@@ -28,7 +28,9 @@ namespace Avanade.LAM.CollabBOT.Dialogs
                            "* Profile Updates \n" +
                            "* User Guides/ KB Articles \n";
 
-            if (message.Text.ToLower().Equals("yes") || message.Text.ToLower().Equals("yep") || message.Text.ToLower().Equals("yup") || message.Text.ToLower().Equals("yeah"))
+            if (message.Text.ToLower().Equals("yes") || message.Text.ToLower().Equals("yep") 
+                || message.Text.ToLower().Equals("yup") || message.Text.ToLower().Equals("yeah")
+                || message.Text.ToLower().Equals("y"))
             {               
 
                 await context.PostAsync("Sure, I can raise a ticket on Service Now, before that I need few inputs from you.");
@@ -54,7 +56,7 @@ namespace Avanade.LAM.CollabBOT.Dialogs
             {
                 var resultFromServiceNow = await result;
                 await context.PostAsync($"A ticket has been raised on your behalf. The reference no is RITM"+ DateTime.Now.ToString("yyyyMMddHHmmss"));
-                context.Done("service now exited with ticket creation");
+                context.Done("Done");
             }
             catch (TooManyAttemptsException)
             {
