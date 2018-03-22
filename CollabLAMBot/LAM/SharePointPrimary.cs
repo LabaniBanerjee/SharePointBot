@@ -14,7 +14,8 @@ using System.Security;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using SharePointPnP;
-
+using System.Net;
+using System.IO;
 
 namespace CollabLAMBot.LAM
 {
@@ -183,6 +184,144 @@ namespace CollabLAMBot.LAM
 
             return isValid;
 
+        }    
+
+        public string GetImage(string _previewImageURL, int LearningType)
+        {
+            string strImage = string.Empty;
+
+            string site = "https://avaindcollabsl.sharepoint.com/sites/SOHA_HelpRepository/";
+            int startIndex = -1;
+            int endIndex = -1;
+            string folder = string.Empty; /*"/sites/SOHA_HelpRepository/VideoRepository/Build%20a%20Chat%20Bot%20with%20Azure%20Bot%20Service/Preview%20Images/"*/;            
+            string file = "snapshot.png";
+            string url = string.Empty;
+
+            try
+            {
+                if(LearningType==1)
+                {
+                    url = _previewImageURL;
+                }
+                else if(LearningType==2)
+                {
+                    startIndex = _previewImageURL.IndexOf("/sites");
+                    endIndex = _previewImageURL.IndexOf("snapshot.png");
+                    folder = _previewImageURL.Substring(startIndex, endIndex - startIndex);
+
+
+                    url = String.Format("{0}_api/web/GetFolderByServerRelativeUrl('{1}')/Files('{2}')/$value", site, folder, file);
+                }             
+                
+                
+                Uri siteUri = new Uri(url);
+                //Get the realm for the URL  
+                string realm = TokenHelper.GetRealmFromTargetUrl(siteUri);
+                //Get the access token for the URL.   
+                //  Requires this app to be registered with the tenant  
+                string accessToken = TokenHelper.GetAppOnlyAccessTokenCustom(
+                  TokenHelper.SharePointPrincipal,
+                  siteUri.Authority, realm, clientID, clientSecret).AccessToken;
+
+                HttpWebRequest request = WebRequest.Create(url) as HttpWebRequest;
+                request.Headers.Add("Authorization", "Bearer" + " " + accessToken);
+                using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
+                {
+                    using (var sourceSteam = response.GetResponseStream())
+                    {
+                        using (var newStream = new MemoryStream())
+                        {
+                            sourceSteam.CopyTo(newStream);
+                            byte[] bytes = newStream.ToArray();
+                            if(bytes.Length>0)
+                                strImage = "data:image/png;base64, " + Convert.ToBase64String(bytes);
+                        }
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
+
+            return strImage;
+        }
+
+        public string GetVideo(string _videoURL)
+        {
+            string _strVideoBase64 = string.Empty;
+            string site = "https://avaindcollabsl.sharepoint.com/sites/SOHA_HelpRepository/";
+            int startIndex = _videoURL.IndexOf("/sites");
+            int endIndex = _videoURL.LastIndexOf("/");
+            //string folder = "/sites/SOHA_HelpRepository/VideoRepository/Build%20a%20Chat%20Bot%20with%20Azure%20Bot%20Service/";
+            //string folder = "/sites/SOHA_HelpRepository/VideoRepository/TheSimplestMachineLearning/";
+            string folder = _videoURL.Substring(startIndex, endIndex + 1 - startIndex);
+            //string file = "TheSimplestMachineLearning.mp4";
+            string file = _videoURL.Substring(endIndex+1);
+            string url = string.Empty;
+
+            try
+            {
+                url = String.Format("{0}_api/web/GetFolderByServerRelativeUrl('{1}')/Files('{2}')/$value", site, folder, file);
+
+                Uri siteUri = new Uri(url);
+                //Get the realm for the URL  
+                string realm = TokenHelper.GetRealmFromTargetUrl(siteUri);
+                //Get the access token for the URL.   
+                //  Requires this app to be registered with the tenant  
+                string accessToken = TokenHelper.GetAppOnlyAccessTokenCustom(
+                  TokenHelper.SharePointPrincipal,
+                  siteUri.Authority, realm, clientID, clientSecret).AccessToken;
+
+                HttpWebRequest request = WebRequest.Create(url) as HttpWebRequest;
+                request.Headers.Add("Authorization", "Bearer" + " " + accessToken);
+                using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
+                {
+                    using (var sourceSteam = response.GetResponseStream())
+                    {
+
+                        using (var reader = new StreamReader(sourceSteam))
+                        {
+                            var strContent = reader.ReadToEnd();
+                            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(strContent);
+
+                            byte[] newbytes = new byte[1500];
+
+                            for (int i = 0; i < 1500; i++)
+                            {
+                                newbytes[i] = plainTextBytes[i];
+                            }
+
+                            if (plainTextBytes.Length>0)
+                            {
+                                _strVideoBase64 = "data:video/mp4;base64," + Convert.ToBase64String(plainTextBytes);
+                            }
+                        }
+
+                        //using (var newStream = new MemoryStream())
+                        //{
+                        //    sourceSteam.CopyTo(newStream);
+                        //    byte[] bytes = newStream.ToArray();
+                        //    byte[] newbytes = new byte[1500];
+
+                        //    for(int i=0; i<1500;i++)
+                        //    {
+                        //        newbytes[i] = bytes[i];
+                        //    }
+
+                        //    if (bytes.Length > 0)
+                        //        _strVideoBase64 = "data:video/mp4;base64," + Convert.ToBase64String(newbytes);
+                        //}
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
+
+            return _strVideoBase64;
+
         }
 
         public bool DoesURLExist(string _inputSiteCollectionTitle)
@@ -221,13 +360,85 @@ namespace CollabLAMBot.LAM
             return isSiteCollectionURLExisting;
         }
 
+        public Dictionary<ListItem, string> SearchLearningVideoByTopic(string _strLearningVideo)
+        {
+            string siteCollectionUrl = "https://avaindcollabsl.sharepoint.com/sites/SOHA_HelpRepository/";          
+
+            Dictionary<ListItem, string> searchedVideos = new Dictionary<ListItem, string>();
+
+            List<ListItem> currentSearchTopics = new List<ListItem>();
+
+            try
+            {
+                ClientContext clientContext;
+                using (clientContext = GetClientContext(siteCollectionUrl, clientID, clientSecret))
+                {
+                    clientContext.ExecuteQuery();
+                    Web web = clientContext.Web;
+                    clientContext.Load(web);
+                    List videoRepository = web.Lists.GetByTitle("VideoRepository");
+                    clientContext.Load(videoRepository);
+                    clientContext.ExecuteQuery();
+                    CamlQuery query = new CamlQuery();
+                    CamlQuery camlQuery = new CamlQuery();
+
+                    camlQuery.ViewXml = "<View Scope=\"RecursiveAll\">"
+                                + "<ViewFields><FieldRef Name=\"Title\"/>"
+                                + "<ViewFields><FieldRef Name=\"SubTitle\"/>"
+                                + "<FieldRef Name=\"VideoSetDescription\"/>"
+                                + "<FieldRef Name=\"AlternateThumbnailUrl\"/>"
+                                + "<FieldRef Name=\"Modified\"/></ViewFields>"
+                                + "<RowLimit>500</RowLimit></View>";
+
+                    ListItemCollection videoCollection = videoRepository.GetItems(query);
+                    clientContext.Load(videoCollection,
+                        videos => videos.Include(
+                            v => v.Id,
+                            v => v.FieldValuesAsHtml,
+                            v => v.FieldValuesAsText,
+                            v => v.DisplayName,
+                            v => v.File));
+                    clientContext.ExecuteQuery();                    
+
+                    List<ListItem> lstListItemCollection = new List<ListItem>();
+                    lstListItemCollection.AddRange(videoCollection);                    
+
+                    currentSearchTopics = lstListItemCollection.FindAll(v => Convert.ToString(v.FieldValuesAsHtml["Tags"]).Contains(_strLearningVideo.ToLower()));
+                    if (currentSearchTopics != null && currentSearchTopics.Count > 0)
+                    {
+                        foreach (ListItem eachFoundVideo in currentSearchTopics)
+                        {
+                            string _videoFolderRelativeURL = web.ServerRelativeUrl + "/VideoRepository/" + eachFoundVideo.FieldValuesAsHtml["Title"]+"/";
+
+                            FileCollection videoFiles = web.GetFolderByServerRelativeUrl(_videoFolderRelativeURL).Files;
+
+                            clientContext.Load(videoFiles);
+                            clientContext.ExecuteQuery();
+
+                            if (videoFiles.Count == 1)
+                            {
+                                string _videoFileFullURL = web.Url + "/VideoRepository/" + eachFoundVideo.FieldValuesAsHtml["Title"] + "/" + videoFiles[0].Name;
+                                searchedVideos.Add(eachFoundVideo, _videoFileFullURL);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            //return currentSearchTopics;
+            return searchedVideos;
+
+        }
+
         public Dictionary<ListItem, string> /*List<ListItem>*/ SearchHelpArticleonTopic(string _strhelpArticle)
         {
             string siteCollectionUrl = "https://avaindcollabsl.sharepoint.com/sites/SOHA_HelpRepository/";
             //Dictionary<string, string> searchedDocs = new Dictionary<string, string>();
 
             Dictionary<ListItem, string> searchedDocs = new Dictionary<ListItem, string>();
-
 
             List<ListItem> currentSearchTopics = new List<ListItem>();
 
@@ -277,9 +488,9 @@ namespace CollabLAMBot.LAM
                             ClientResult<string> previewURL = eachFoundArticle.File.GetImagePreviewUri(20, 20, "GetImagePreviewUri");
                          
 
-                            ClientResult<string> previewURI = eachFoundArticle.File.GetImagePreviewUrl(40, 40, "GetImagePreviewUrl");
+                            //ClientResult<string> previewURI = eachFoundArticle.File.GetImagePreviewUrl(40, 40, "GetImagePreviewUrl");
                            
-                            var wopiFrameUrl = eachFoundArticle.GetWOPIFrameUrl(Microsoft.SharePoint.Client.Utilities.SPWOPIFrameAction.InteractivePreview);
+                            //var wopiFrameUrl = eachFoundArticle.GetWOPIFrameUrl(Microsoft.SharePoint.Client.Utilities.SPWOPIFrameAction.InteractivePreview);
                             clientContext.ExecuteQuery();
 
                             searchedDocs.Add(eachFoundArticle, previewURL.Value.ToString());
@@ -515,6 +726,33 @@ namespace CollabLAMBot.LAM
             }
 
             return isValid;
+        }
+
+        public bool IsUserProfilePropertyUpdated(string _inputSPOUserID, string _strPropertyToUpdate)
+        {
+            bool isProfileUpdated = false;
+            string siteCollectionUrl = SPOAdminURL;
+            try
+            {
+                ClientContext clientContext;
+                using (clientContext = GetClientContext(siteCollectionUrl, clientID, clientSecret))
+                {
+                    try
+                    {
+
+                    }
+                    catch(Exception ex)
+                    {
+
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                isProfileUpdated = false;
+            }
+
+            return isProfileUpdated;
         }
 
         public bool IsSiteCollectionAdmin(string _inputSPOUserID)

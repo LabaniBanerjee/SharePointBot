@@ -96,7 +96,7 @@ namespace CollabLAMBot.Dialogs
                         else
                         {
                             await context.PostAsync("Permission could not be granted \U0001F641 . Please try again later.");
-                            context.Done("not done");
+                            context.Done("Not Done");
                         }
 
                     }

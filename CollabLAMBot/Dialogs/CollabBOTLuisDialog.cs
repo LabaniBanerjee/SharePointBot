@@ -57,10 +57,27 @@ namespace CollabLAMBot.Dialogs
             //context.Call(_helpdialog, OnOptionSelected);
             #endregion                      
 
-            await context.PostAsync("Sorry \U0001F641, I am unable to understand you." +                
-                        "\r\r Do you want me to raise a service request for the same?");
+            var options = "* Site Access \n" +
+                            "* Site Creation \n" +
+                            "* Site Quota Change \n" +
+                            "* External User Access \n" +
+                            "* Profile Updates \n" +
+                            "* User Guides/ KB Articles \n";
 
-            context.Call(new ServiceNowDialog(), Callback);
+            if (result.Query.ToLower().Equals("help"))
+            {
+                await context.PostAsync("I can help you with some popular Support Requests such as: " +
+                 "\r\r" + options +
+                        "\r\r Please type any of the above keywords or any other query you may have.");
+            }
+            else
+            {
+
+                await context.PostAsync("Sorry \U0001F641, I am unable to understand you." +
+                            "\r\r Do you want me to raise a service request for the same?");
+
+                context.Call(new ServiceNowDialog(), Callback);
+            }
         }      
 
 
@@ -201,12 +218,20 @@ namespace CollabLAMBot.Dialogs
                 //if (!(myresult.Equals("Greeting") || myresult.Equals("service now exited with no") || myresult.Equals("Farewell")))
                 if(myresult.Equals("Done"))
                 {
-                    await context.PostAsync("Hope I am able to assist you on your request.");
+                    await context.PostAsync("Hope I am able to assist you on your request. "+
+                        "\r\r To see the entire list of support options, please type 'help'.");
                   
+                }
+                if (myresult.Equals("Article Done"))
+                {
+                    await context.PostAsync("Looks like you do not need to search any other topic for the time being. If you want to come back to search, please type user guides or  kb articles."+
+                        "\r\r For anything else, please type 'help'.");
+
                 }
                 else if (myresult.Equals("Not Done"))
                 {
-                    await context.PostAsync("Sorry \U0001F641 , I am unable to assist you. Let us try again.");
+                    await context.PostAsync("Sorry \U0001F641 , I am unable to assist you. Let us try again." +
+                        "\r\r To see the entire list of support options, please type 'help'.");
                 }
 
             }

@@ -86,53 +86,92 @@ namespace Avanade.LAM.CollabBOT.Dialogs
             {
                 var resultFromArticleSearch = await result;                
                 string _strhelpArticle = Convert.ToString(resultFromArticleSearch.HelpArticle);
+                int _iLearningMaterial = Convert.ToInt32(resultFromArticleSearch.LearningMaterial);
 
                 try
                 {
                     SharePointPrimary obj = new SharePointPrimary();
                     Dictionary<ListItem, string> searchedDocs = new Dictionary<ListItem, string>();
 
-                    if (_strhelpArticle.ToLower().Contains("video"))
-                    {
-                        await context.PostAsync($"I have found one video on your search topic \U0001F44D ");
-
-                        var videoCard = new VideoCard
+                    if (_iLearningMaterial == 2)
+                    {  
+                        searchedDocs = obj.SearchLearningVideoByTopic(_strhelpArticle);
+                        if (searchedDocs.Count > 0)
                         {
-                            Title = "Build a Chat Bot with Azure Bot Service",
-                            Subtitle = "by ShaunLuttin, Anthony Chu",
-                            Text = "Microsoft MVPs Anthony Chu and Shaun Luttin sit down and build a natural language chat bot from scratch using the new Azure Bot Service and Microsoft Cognitive Services' LUIS (Language Understanding Intelligent Service).",
-                            Image = new ThumbnailUrl
+                            if(searchedDocs.Count == 1)
+                                await context.PostAsync($"I have found {searchedDocs.Count} video on your search topic \U0001F44D ");
+                            else
+                                await context.PostAsync($"I have found {searchedDocs.Count} videos on your search topic \U0001F44D ");
+
+                            foreach (var eachDoc in searchedDocs)
                             {
-                                Url = "http://blog.legalsolutions.thomsonreuters.com/wp-content/uploads//2015/01/online-bot.png",
-                                Alt = "Azure Bot"
-                            },
-                            Media = new List<MediaUrl>
-                            {
-                                new MediaUrl()
+                                try
                                 {
-                                    Url = "https://sec.ch9.ms/ch9/a7a4/10df13cf-a7ac-40a2-b713-6fcc935ba7a4/buildachatbotwithazurebotservice_high.mp4"
+                                    var videoCard = new VideoCard();
+                                    videoCard.Title = eachDoc.Key.FieldValuesAsHtml["Title"];
+                                    videoCard.Subtitle = eachDoc.Key.FieldValuesAsHtml["SubTitle"];
+                                    videoCard.Text = eachDoc.Key.FieldValuesAsHtml["VideoSetDescription"];
+
+                                    string _previewImageBase64 = obj.GetImage(eachDoc.Key.FieldValuesAsText["AlternateThumbnailUrl"].Split(',')[0].ToString(), _iLearningMaterial);
+
+
+                                    if (!string.IsNullOrEmpty(_previewImageBase64))
+                                    {
+                                        videoCard.Image = new ThumbnailUrl(
+                                            url: _previewImageBase64,
+                                            alt: "Learning Video");
+                                    }
+
+                                    //string _videoBase64 = obj.GetVideo("https://avaindcollabsl.sharepoint.com/sites/SOHA_HelpRepository/VideoRepository/Build%20a%20Chat%20Bot%20with%20Azure%20Bot%20Service/buildachatbotwithazurebotservice_high.mp4");
+
+                                    //string _videoBase64 = obj.GetVideo(eachDoc.Value);
+
+
+                                    if (!string.IsNullOrEmpty(eachDoc.Value))
+                                    {
+                                        videoCard.Media = new List<MediaUrl> { new MediaUrl("https://sec.ch9.ms/ch9/a7a4/10df13cf-a7ac-40a2-b713-6fcc935ba7a4/buildachatbotwithazurebotservice.mp4") };
+
+                                        videoCard.Buttons = new List<CardAction> { new CardAction(
+                                        type  : ActionTypes.OpenUrl,
+                                        title : "Learn more",
+                                        value : "https://channel9.msdn.com/Blogs/MVP-Azure/build-a-chatbot-with-azure-bot-service") };
+                                    }
+
+
+                                    //if (!string.IsNullOrEmpty(/*eachDoc.Value*/_videoBase64))
+                                    //{
+                                    //    videoCard.Media = new List<MediaUrl> { new MediaUrl(_videoBase64) };
+
+                                    //    videoCard.Buttons = new List<CardAction> { new CardAction(
+                                    //    type  : ActionTypes.OpenUrl,
+                                    //    title : "Learn more",
+                                    //    value : eachDoc.Value) };
+                                    //}
+
+                                    Microsoft.Bot.Connector.Attachment attachment = new Microsoft.Bot.Connector.Attachment();
+                                    var replyMessage = context.MakeMessage();
+                                    attachment = videoCard.ToAttachment();
+                                    replyMessage.Attachments.Add(attachment);
+
+                                    await context.PostAsync(replyMessage);
                                 }
-                            },
-                            Buttons = new List<CardAction>
-                            {
-                                new CardAction()
+                                catch(Exception ex)
                                 {
-                                    Title = "Learn More",
-                                    Type = ActionTypes.OpenUrl,
-                                    Value = "https://channel9.msdn.com/Blogs/MVP-Azure/build-a-chatbot-with-azure-bot-service"
+                                    await context.PostAsync(ex.Message);
                                 }
                             }
-                        };
 
-                        Microsoft.Bot.Connector.Attachment attachment = new Microsoft.Bot.Connector.Attachment();
-                        var replyMessage = context.MakeMessage();
-                        attachment = videoCard.ToAttachment();
-                        replyMessage.Attachments.Add(attachment);
+                            await context.PostAsync("Hope you have found the result informative. Do you want to search for any other topic?");
+                            context.Wait(MessageReceived);
+                        }
+                        else
+                        {
+                            await context.PostAsync($"No video found. Do you want to search for any other topic?");
+                            context.Wait(MessageReceived);
+                        }                       
 
-                        await context.PostAsync(replyMessage);
-                        context.Done("Done");
                     }
-                    else
+                    else if(_iLearningMaterial == 1)
                     {
                         searchedDocs = obj.SearchHelpArticleonTopic(_strhelpArticle);
                         if (searchedDocs.Count > 0)
@@ -142,45 +181,39 @@ namespace Avanade.LAM.CollabBOT.Dialogs
                             else
                                 await context.PostAsync($"I have found {searchedDocs.Count} articles on your search topic \U0001F44D ");
 
-                            foreach (var eachDoc in searchedDocs)
-                            //foreach (ListItem eachDoc in searchedDocs)
+                            foreach (var eachDoc in searchedDocs)                          
                             {
-                                Microsoft.Bot.Connector.Attachment attachment = new Microsoft.Bot.Connector.Attachment();
-                                //attachment.ContentType = "application/pdf";
-                                //attachment.ContentUrl = eachDoc.Value;
-                                //attachment.Name = eachDoc.Key;
+                                Microsoft.Bot.Connector.Attachment attachment = new Microsoft.Bot.Connector.Attachment();                                
 
-                                var replyMessage = context.MakeMessage();
-                                //replyMessage.Attachments = new List<Attachment> { attachment };
-                                //await context.PostAsync(replyMessage);
-                                                               
+                                var replyMessage = context.MakeMessage();                                                           
 
-                                var heroCard = new HeroCard
-                                {
-                                    Title = eachDoc.Key.DisplayName,
-                                    Subtitle = "by Avanade Collab SL Capability",
-                                    Text = eachDoc.Key.FieldValuesAsHtml["KpiDescription"],
-                                    //Images = new List<CardImage> { new CardImage("https://sec.ch9.ms/ch9/7ff5/e07cfef0-aa3b-40bb-9baa-7c9ef8ff7ff5/buildreactionbotframework_960.jpg") },
-                                    //Images = new List<CardImage> {new CardImage (eachDoc.Key.FieldValuesAsHtml["ThumbnailURL"]) },
-                                    Images = new List<CardImage> { new CardImage(eachDoc.Value.ToString()) },
-                                    Buttons = new List<CardAction> { new CardAction(ActionTypes.OpenUrl, "Read more", value: Constants.RootSiteCollectionURL + eachDoc.Key.File.ServerRelativeUrl) }
-                                };
+                                var heroCard= new HeroCard();
 
+                                string _previewImageBase64 = obj.GetImage(eachDoc.Value.ToString(), _iLearningMaterial);
 
+                                heroCard.Title = eachDoc.Key.DisplayName;
+                                heroCard.Subtitle = "by Avanade Collab SL Capability";
+                                heroCard.Text = eachDoc.Key.FieldValuesAsHtml["KpiDescription"];
+                                heroCard.Buttons = new List<CardAction> { new CardAction(ActionTypes.OpenUrl, "Read more", value: Constants.RootSiteCollectionURL + eachDoc.Key.File.ServerRelativeUrl) };
+
+                                if(!string.IsNullOrEmpty(_previewImageBase64))
+                                    heroCard.Images = new List<CardImage> { new CardImage(_previewImageBase64) };                               
+
+                                
                                 attachment = heroCard.ToAttachment();
                                 replyMessage.Attachments.Add(attachment);
 
                                 await context.PostAsync(replyMessage);
-
                             }
-                           
-                            context.Done("Done");
+
+                            await context.PostAsync("Hope you have found the result informative. Do you want to search for any other topic?");
+                            context.Wait(MessageReceived);
+                            
                         }
                         else
                         {
-                            await context.PostAsync($"No document found. Do you want to search for any other topic?");
-                            //context.Done("Not Done");
-                            context.Wait(MessageReceived);
+                            await context.PostAsync($"No document found. Do you want to search for any other topic?");                           
+                            context.Wait(MessageReceived);                            
                         }
                     }                   
                 }
@@ -207,11 +240,11 @@ namespace Avanade.LAM.CollabBOT.Dialogs
             {
                 var articleSearchFormDialog = FormDialog.FromForm(this.BuildSearchArticleForm, FormOptions.PromptInStart);
 
-                context.Call(articleSearchFormDialog, this.ResumeArticleSearchDialog);
+                context.Call(articleSearchFormDialog, this.ResumeArticleSearchDialog);               
             }
             else
             {
-                context.Done("Not Done");
+                context.Done("Article Done");
             }
 
         }
@@ -238,6 +271,14 @@ namespace Avanade.LAM.CollabBOT.Dialogs
     public class ArticleSearchQuery
     {
         [Prompt("Which topic do you want me to search for?")]
-        public string HelpArticle { get; set; }        
+        public string HelpArticle { get; set; }
+
+        public UserGuideType? LearningMaterial { get; set; }
+
+        public enum UserGuideType
+        {
+            Article = 1,
+            Video = 2
+        }
     }
 }
